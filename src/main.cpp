@@ -13,10 +13,19 @@ static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("filename of 
 void analyze(const Function& f) {
 
     outs() << f.getName() << ":\n";
+    for(const auto& v : f.args()) {
+        outs() << "  ";
+        if(v.hasName()) {
+            outs() << v.getName() << "<" << &v << ">";
+        } else {
+            outs() << &v;
+        }
+    }
+    outs() << "\n";
     for(const auto& bb : f.getBasicBlockList()) {
         outs() << "  [";
         if(bb.hasName()) {
-            outs() << bb.getName();
+            outs() << bb.getName() << "<" << &bb << ">";
         } else {
             outs() << &bb;
         }
@@ -30,7 +39,7 @@ void analyze(const Function& f) {
                 else outs() << ", ";
 
                 if(v->hasName()) {
-                    outs() << v->getName();
+                    outs() << v->getName() << "<" << v << ">";
                 } else if(auto c = dyn_cast<Constant>(v)) {
                     outs() << c->getUniqueInteger();
                 } else {
@@ -41,7 +50,7 @@ void analyze(const Function& f) {
 
             const auto ret = &cast<Value>(inst);
             if(ret->hasName()) {
-                outs() << ret->getName();
+                outs() << ret->getName() << "<" << ret << ">";
             } else {
                 outs() << ret;
             }
@@ -49,28 +58,23 @@ void analyze(const Function& f) {
         }
     }
 
-    APSInt a("3"), b("9"), c("12"), d("14");
-    IntervalSolver<std::string> solver{std::make_shared<IntervalSymbols<std::string>>(
-            IntervalSymbols<std::string>{{"a", Interval(a,d)},
-                                         {"9", Interval(b)},
-                                         {"12", Interval(c)}}),
-            std::make_shared<AndOp<std::string>>(
-                    std::make_shared<BinOp<std::string>>(BinOp<std::string>::LT,
-                            std::make_shared<Atom<std::string>>("a"),
-                            std::make_shared<Atom<std::string>>(("12"))
-                    ),
-                    std::make_shared<BinOp<std::string>>(BinOp<std::string>::GT,
-                                            std::make_shared<Atom<std::string>>("a"),
-                                            std::make_shared<Atom<std::string>>(("9"))
-                    )
-            )
-    };
+    outs() << "-----analysis-----\n";
 
-    for(const auto& i : solver.solve(true)) {
-        outs() << i.first << ":" << i.second << "\n";
+    IntervalAnalysis analysis(&f);
+    analysis.analyze(999);
+
+    for(const auto &i : analysis.dataMap) {
+        outs() << "  [" << i.first->getName() << "]\n";
+        for(const auto &j : i.second) {
+            outs() << "\t";
+            if(j.first->hasName()) {
+                outs() << j.first->getName();
+            } else {
+                outs() << j.first;
+            }
+            outs() << " : " << j.second << "\n";
+        }
     }
-
-    outs() << APSInt("1").extend(2) + APSInt("1") << "\n";
 }
 
 int main(int argc, char *argv[]) {

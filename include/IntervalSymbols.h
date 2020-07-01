@@ -7,13 +7,13 @@
 
 #include <Interval.h>
 #include <map>
+#include <functional>
 
 template <typename Key>
 struct IntervalSymbols : std::map<Key, Interval> {
     using std::map<Key, Interval>::map;
 
-    template <typename F>
-    static IntervalSymbols symbolOp(F op,
+    static IntervalSymbols symbolOp(const std::function<Interval(const Interval& a, const Interval& b)>& op,
             const IntervalSymbols& a, const IntervalSymbols& b,
             bool addUniqueItem = true) {
         IntervalSymbols symbols;
