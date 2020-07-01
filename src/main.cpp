@@ -4,7 +4,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 
-#include "IntervalSolver.h"
+#include "IntervalAnalysis.h"
 
 using namespace llvm;
 
@@ -50,10 +50,10 @@ void analyze(const Function& f) {
     }
 
     APSInt a("3"), b("9"), c("12"), d("14");
-    IntervalSolver<std::string> solver{std::make_shared<std::map<std::string, Interval>>(
-            std::map<std::string, Interval>{{"a", Interval(a,d)},
-                                            {"9", Interval(b)},
-                                            {"12", Interval(c)}}),
+    IntervalSolver<std::string> solver{std::make_shared<IntervalSymbols<std::string>>(
+            IntervalSymbols<std::string>{{"a", Interval(a,d)},
+                                         {"9", Interval(b)},
+                                         {"12", Interval(c)}}),
             std::make_shared<AndOp<std::string>>(
                     std::make_shared<BinOp<std::string>>(BinOp<std::string>::LT,
                             std::make_shared<Atom<std::string>>("a"),
@@ -69,6 +69,8 @@ void analyze(const Function& f) {
     for(const auto& i : solver.solve(true)) {
         outs() << i.first << ":" << i.second << "\n";
     }
+
+    outs() << APSInt("1").extend(2) + APSInt("1") << "\n";
 }
 
 int main(int argc, char *argv[]) {

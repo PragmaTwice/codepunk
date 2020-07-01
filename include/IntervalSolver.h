@@ -7,18 +7,17 @@
 
 #include <Interval.h>
 #include <BoolExpr.h>
-
-#include <map>
+#include <IntervalSymbols.h>
 
 template <typename Key>
 struct IntervalSolver {
-    using Symbols = std::map<Key, Interval>;
+    using Symbols = IntervalSymbols<Key>;
     using Expr = BoolExpr<Key>;
 
     std::shared_ptr<Symbols> symbols;
     std::shared_ptr<Expr> expr;
 
-    std::map<Key, Interval> solve(bool assume) {
+    Symbols solve(bool assume) {
         switch (expr->getOpcode()) {
             case Expr::Not:
                 return IntervalSolver{symbols, std::static_pointer_cast<NotOp<Key>>(expr)->v}.solve(!assume);
@@ -26,13 +25,13 @@ struct IntervalSolver {
                 auto a = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->l}.solve(assume);
                 auto b = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->r}.solve(assume);
 
-                return symbolOr(a, b);
+                return a | b;
             }
             case Expr::And: {
                 auto a = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->l}.solve(assume);
                 auto b = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->r}.solve(assume);
 
-                return symbolAnd(a, b);
+                return a & b;
             }
             case Expr::LT: {
                 const auto &lKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->l)->v;
@@ -107,24 +106,57 @@ struct IntervalSolver {
         }
     }
 
-    template <typename F>
-    static Symbols symbolOp(F op, const Symbols& a, const Symbols& b) {
-        Symbols symbols;
+    Ternary eval() {
+        switch (expr->getOpcode()) {
+            case Expr::Not:
+                return !IntervalSolver{symbols, std::static_pointer_cast<NotOp<Key>>(expr)->v}.eval();
+            case Expr::Or: {
+                auto a = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->l}.eval();
+                auto b = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->r}.eval();
 
-        for(const auto &v : a) {
-            symbols.emplace(v.first, op(v.second, b.at(v.first)));
+                return a || b;
+            }
+            case Expr::And: {
+                auto a = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->l}.eval();
+                auto b = IntervalSolver{symbols, std::static_pointer_cast<BinOp<Key>>(expr)->r}.eval();
+
+                return a && b;
+            }
+            case Expr::LT: {
+                const auto &lKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->l)->v;
+                const auto &rKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->r)->v;
+
+                const auto &lVal = (*symbols)[lKey], &rVal = (*symbols)[rKey];
+
+                return lVal < rVal;
+            }
+            case Expr::LE: {
+                const auto &lKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->l)->v;
+                const auto &rKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->r)->v;
+
+                const auto &lVal = (*symbols)[lKey], &rVal = (*symbols)[rKey];
+
+                return lVal <= rVal;
+            }
+            case Expr::EQ: {
+                const auto &lKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->l)->v;
+                const auto &rKey = std::static_pointer_cast<Atom<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->r)->v;
+
+                const auto &lVal = (*symbols)[lKey], &rVal = (*symbols)[rKey];
+
+                return lVal == rVal;
+            }
+            case Expr::GT:
+            case Expr::GE:
+            case Expr::NE:
+                return !IntervalSolver{symbols,
+                    std::make_shared<BinOp<Key>>(std::static_pointer_cast<BinOp<Key>>(expr)->reverse())
+                }.eval();
+            default:
+                assert("unreachable");
+                return {};
         }
-
-        return symbols;
-    };
-
-    static Symbols symbolOr(const Symbols& a, const Symbols& b) {
-        return symbolOp([](const Interval& a, const Interval& b) { return a | b; }, a, b);
-    };
-
-    static Symbols symbolAnd(const Symbols& a, const Symbols& b) {
-        return symbolOp([](const Interval& a, const Interval& b) { return a & b; }, a, b);
-    };
+    }
 };
 
 #endif //CODEPUNK_INTERVALSOLVER_H
