@@ -68,6 +68,10 @@ public:
         return l == r;
     }
 
+    APSInt length() const {
+        return r - l;
+    }
+
     friend Interval operator&(const Interval& a, const Interval& b) {
         return {std::max(a.l, b.l), std::min(a.r, b.r)};
     }
