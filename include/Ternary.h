@@ -23,6 +23,15 @@ struct Ternary {
         return v == True;
     }
 
+    [[nodiscard]] bool equals(Ternary t) const {
+        return t.v == v;
+    }
+
+    friend Ternary operator==(Ternary a, Ternary b) {
+        if(a.v == Unknown || b.v == Unknown) return Unknown;
+        return Ternary(a.v == b.v);
+    }
+
     friend Ternary operator!(Ternary t) {
         switch (t.v) {
             case True:
