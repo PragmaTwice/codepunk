@@ -12,8 +12,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: install llvm
         run: sudo apt install llvm-10-dev
+      - name: generate build script
+        run: cmake .
       - name: build project
-        run: |
-          mkdir -p build && cd build
-          cmake ..
-          cmake --build .
+        run: make all
+      - name: run unit testing
+        run: make test

@@ -46,3 +46,5 @@ target_compile_definitions(codepunk_test PRIVATE ${LLVM_DEFINITIONS})
 target_include_directories(codepunk_test PRIVATE ${LLVM_INCLUDE_DIRS} include)
 target_link_libraries(codepunk_test ${llvm_libs} gtest_main)
 
+enable_testing()
+add_test(NAME test COMMAND codepunk_test)
