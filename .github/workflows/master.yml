@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: install llvm
-        run: sudo apt install libllvm10
+        run: sudo apt install llvm-10-dev
       - name: build project
         run: |
           mkdir -p build && cd build
