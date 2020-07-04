@@ -13,7 +13,7 @@ const auto ZeroToOne = Interval(
 );
 
 TEST(Interval, Construct) {
-    ASSERT_TRUE(Zero.equals(Interval()));
+    ASSERT_TRUE(Zero.equals(Interval(APSInt(llvm::APInt(32, 0), false))));
     ASSERT_TRUE(ZeroToOne.equals(Interval(
             APSInt(32, false),
             APSInt(llvm::APInt(32, 1), false)
@@ -42,24 +42,26 @@ TEST(Interval, Predicate) {
     ASSERT_FALSE(Zero.equals(ZeroToOne));
     ASSERT_FALSE(ZeroToOne.equals(Zero));
 
-    ASSERT_TRUE(ZeroToOne.length() == APSInt("1"));
+    ASSERT_TRUE(ZeroToOne.length() == APSInt(llvm::APInt(32, 1), false));
     ASSERT_FALSE(ZeroToOne.isConstant());
 
     ASSERT_TRUE(Zero.isConstant());
     ASSERT_TRUE(ZeroToOne.contains(Zero));
-    ASSERT_TRUE(ZeroToOne.contains(APSInt("1")));
+    ASSERT_TRUE(ZeroToOne.contains(APSInt(llvm::APInt(32, 1), false)));
 
-    ASSERT_FALSE(ZeroToOne.contains(APSInt("2")));
+    ASSERT_FALSE(ZeroToOne.contains(APSInt(llvm::APInt(32, 2), false)));
     ASSERT_FALSE(ZeroToOne.contains(APSInt(llvm::APInt(32, -1, true), false)));
     ASSERT_TRUE(Interval(APSInt("1"), APSInt("3")).contains(APSInt("2")));
     ASSERT_FALSE(Zero.contains(ZeroToOne));
 
-    ASSERT_TRUE(Zero.length() == APSInt("0"));
+    ASSERT_TRUE(Zero.length() == APSInt(32, false));
     ASSERT_TRUE(ZeroToOne.overlaps(Zero));
     ASSERT_TRUE(Zero.overlaps(ZeroToOne));
     ASSERT_FALSE(Zero.overlaps(One));
-    ASSERT_TRUE(ZeroToOne.overlaps(Interval(APSInt("1"), APSInt("2"))));
-    ASSERT_FALSE(ZeroToOne.overlaps(Interval(APSInt("2"), APSInt("3"))));
+    ASSERT_TRUE(ZeroToOne.overlaps(Interval(APSInt(llvm::APInt(32, 1), false),
+            APSInt(llvm::APInt(32, 2), false))));
+    ASSERT_FALSE(ZeroToOne.overlaps(Interval(APSInt(llvm::APInt(32, 2), false),
+            APSInt(llvm::APInt(32, 3), false))));
     ASSERT_TRUE(Interval(APSInt("0"), APSInt("2")).overlaps(Interval(APSInt("1"), APSInt("3"))));
 }
 
@@ -74,9 +76,9 @@ TEST(Interval, SetOp) {
     ASSERT_TRUE(ZeroToOne.equals(
             Interval(APSInt(llvm::APInt(32, -1, true), false), APSInt(llvm::APInt(32, 1), false)) &
             Interval(APSInt(llvm::APInt(32, 0), false), APSInt(llvm::APInt(32, 3), false))));
-    ASSERT_TRUE(ZeroToOne.equals(Zero | Interval(APSInt("1"))));
+    ASSERT_TRUE(ZeroToOne.equals(Zero | One));
 
-    ASSERT_FALSE((Zero & Interval(APSInt("1"))).isValid());
+    ASSERT_FALSE((Zero & One).isValid());
     ASSERT_TRUE(Interval(APSInt(llvm::APInt(32, -1, true), false), APSInt(llvm::APInt(32, 10), false)).equals(
             Interval(APSInt(llvm::APInt(32, -1, true), false), APSInt(llvm::APInt(32, 1), false)) |
             Interval(APSInt(llvm::APInt(32, 9), false), APSInt(llvm::APInt(32, 10), false))));
