@@ -1,14 +1,14 @@
 on: [push, pull_request]
 
 jobs:
-    build:
-        runs-on: ubuntu-20.04
-        steps:
-            - uses: actions/checkout@v2
-            - name: install llvm
-              run: sudo apt install libllvm10
-            - name: build project
-              run: |
-                mkdir -p build && cd build
-                cmake ..
-                cmake --build .
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: install llvm
+        run: sudo apt install libllvm10
+      - name: build project
+        run: |
+          mkdir -p build && cd build
+          cmake ..
+          cmake --build .
