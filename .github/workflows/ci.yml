@@ -9,5 +9,6 @@ jobs:
               run: sudo apt install libllvm10
             - name: build project
               run: |
-                cmake .
-                cmake --build
+                mkdir -p build && cd build
+                cmake ..
+                cmake --build .
