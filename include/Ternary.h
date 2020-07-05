@@ -32,6 +32,10 @@ struct Ternary {
         return Ternary(a.v == b.v);
     }
 
+    friend Ternary operator!=(Ternary a, Ternary b) {
+        return !(a == b);
+    }
+
     friend Ternary operator!(Ternary t) {
         switch (t.v) {
             case True:
