@@ -6,6 +6,11 @@
 
 *a little interval analysis tool on LLVM IR*
 
+## Dependencies
+
+- LLVM ([releases/10.x](https://github.com/llvm/llvm-project/tree/release/10.x))
+- GoogleTest ([master](https://github.com/google/googletest/tree/master))
+
 ## Algorithm
 
 - interval analysis via abstract interpretation
