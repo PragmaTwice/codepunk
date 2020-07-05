@@ -4,76 +4,56 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include "IntervalAnalysis.h"
 
 using namespace llvm;
 
 static cl::opt<std::string> InputFilename(cl::Positional, cl::desc("filename of LLVM IR input"));
+static cl::opt<int> MaxIteration("iterate", cl::desc("max iteration count"),
+        cl::value_desc("number"), cl::init(-1));
 
-void analyze(const Function& f) {
+raw_ostream &operator<<(raw_ostream& o, const Value *v) {
+    if(v->hasName()) {
+        return o << v->getName() << " <" << (void *)v << ">";
+    }
+    if(auto c = dyn_cast<Constant>(v)) {
+        return o << c->getUniqueInteger() << " <" << (void *)v << ">";
+    }
 
-    outs() << f.getName() << ":\n";
-    for(const auto& v : f.args()) {
-        outs() << "  ";
-        if(v.hasName()) {
-            outs() << v.getName() << "<" << &v << ">";
-        } else {
-            outs() << &v;
-        }
+    return o << (void *)v;
+}
+
+void analyze(const Function* f, int maxIteration) {
+    IntervalAnalysis analysis(f);
+    analysis.analyze(maxIteration);
+
+    outs() << f->getName() << ":\n";
+    for(const auto& v : f->args()) {
+        outs() << "  | " << &v;
     }
     outs() << "\n";
-    for(const auto& bb : f.getBasicBlockList()) {
-        outs() << "  [";
-        if(bb.hasName()) {
-            outs() << bb.getName() << "<" << &bb << ">";
-        } else {
-            outs() << &bb;
-        }
-        outs() << "]\n";
+    for(const auto& bb : f->getBasicBlockList()) {
+        outs() << "  [" << &bb << "]\n";
 
         for(const auto& inst : bb.getInstList()) {
-            outs() << '\t' << inst.getOpcodeName() << " (";
+            outs() << "\t" << inst.getOpcodeName() << " (";
             bool isF = true;
             for(const auto& v : inst.operands()) {
                 if(isF) isF = false;
                 else outs() << ", ";
 
-                if(v->hasName()) {
-                    outs() << v->getName() << "<" << v << ">";
-                } else if(auto c = dyn_cast<Constant>(v)) {
-                    outs() << c->getUniqueInteger();
-                } else {
-                    outs() << v;
-                }
+                outs() << v;
             }
-            outs() << ") -> ";
-
-            const auto ret = &cast<Value>(inst);
-            if(ret->hasName()) {
-                outs() << ret->getName() << "<" << ret << ">";
-            } else {
-                outs() << ret;
-            }
-            outs() << "\n";
+            outs() << ")->" << &inst << "\n";
         }
-    }
 
-    outs() << "-----analysis-----\n";
+        outs() << "  \t" << std::string(50, '-') << "\n";
 
-    IntervalAnalysis analysis(&f);
-    analysis.analyze(999);
-
-    for(const auto &i : analysis.dataMap) {
-        outs() << "  [" << i.first->getName() << "]\n";
-        for(const auto &j : i.second) {
-            outs() << "\t";
-            if(j.first->hasName()) {
-                outs() << j.first->getName();
-            } else {
-                outs() << j.first;
-            }
-            outs() << " : " << j.second << "\n";
+        const auto res = analysis.dataMap.at(&bb);
+        for(const auto &j : res) {
+            outs() << "\t" << j.first << " : " << j.second << "\n";
         }
     }
 }
@@ -87,8 +67,8 @@ int main(int argc, char *argv[]) {
     }
 
     LLVMContext ctx;
-
     SMDiagnostic diag;
+
     auto mod = parseIRFile(InputFilename, diag, ctx);
 
     if(auto msg = diag.getMessage(); !msg.empty()) {
@@ -99,6 +79,6 @@ int main(int argc, char *argv[]) {
     const auto& funcList = mod->getFunctionList();
 
     for(const auto& func : funcList) {
-        analyze(func);
+        analyze(&func, MaxIteration);
     }
 }
