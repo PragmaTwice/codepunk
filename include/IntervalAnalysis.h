@@ -247,7 +247,7 @@ struct IntervalAnalysis {
     }
 
     static Interval fromTernary(Ternary t) {
-        APSInt zero(1, false), one(llvm::APInt(1, "1", 10), false);
+        APSInt zero(1, false), one(APInt(1, 1), false);
 
         switch (t.v) {
             case Ternary::True:

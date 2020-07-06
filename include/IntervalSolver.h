@@ -41,7 +41,7 @@ struct IntervalSolver {
                 auto newSymbols = *symbols;
 
                 if (assume) {
-                    const auto& One = APSInt(llvm::APInt(1, "1", 10), false);
+                    const auto& One = APSInt(APInt(1, 1), false);
                     newSymbols[lKey] = Interval{lVal.l, std::min(lVal.r, rVal.r - One)};
                     newSymbols[rKey] = Interval{std::max(lVal.l + One, rVal.l), rVal.r};
                 } else {
@@ -62,7 +62,7 @@ struct IntervalSolver {
                     newSymbols[lKey] = Interval{lVal.l, std::min(lVal.r, rVal.r)};
                     newSymbols[rKey] = Interval{std::max(lVal.l, rVal.l), rVal.r};
                 } else {
-                    const auto& One = APSInt(llvm::APInt(1, "1", 10), false);
+                    const auto& One = APSInt(APInt(1, 1), false);
                     newSymbols[lKey] = Interval{std::max(lVal.l, rVal.l + One), lVal.r};
                     newSymbols[rKey] = Interval{rVal.l, std::min(lVal.r - One, rVal.r)};
                 }
@@ -81,7 +81,7 @@ struct IntervalSolver {
                     newSymbols[lKey] = res;
                     newSymbols[rKey] = res;
                 } else {
-                    const auto& One = APSInt(llvm::APInt(1, "1", 10), false);
+                    const auto& One = APSInt(APInt(1, 1), false);
                     if(lVal.isConstant()) {
                         if(lVal.l == rVal.l) newSymbols[rKey] = Interval{rVal.l + One, rVal.r};
                         if(lVal.l == rVal.r) newSymbols[rKey] = Interval{rVal.l, rVal.r - One};

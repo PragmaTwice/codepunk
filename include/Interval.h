@@ -13,6 +13,7 @@
 #include <algorithm>
 
 
+using llvm::APInt;
 using llvm::APSInt;
 
 template <typename T>
@@ -29,6 +30,8 @@ public:
     Interval() = default;
 
     Interval(APSInt l, APSInt r) : l(std::move(l)), r(std::move(r)) {}
+    Interval(const APInt &l, const APInt &r, bool isUnsigned = false)
+        : l(l, isUnsigned), r(r, isUnsigned) {}
 
     explicit Interval(const APSInt& c) : l(c), r(c) {}
 
