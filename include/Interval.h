@@ -34,6 +34,7 @@ public:
         : l(l, isUnsigned), r(r, isUnsigned) {}
 
     explicit Interval(const APSInt& c) : l(c), r(c) {}
+    explicit Interval(const APInt& c, bool isUnsigned = false) : l(c, isUnsigned), r(c, isUnsigned) {}
 
     [[nodiscard]] bool isValid() const {
         return l <= r;
